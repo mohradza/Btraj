@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
-set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+#set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
 catkin_package(
   INCLUDE_DIRS include
@@ -32,9 +32,10 @@ include_directories(
     SYSTEM 
     third_party
     ${catkin_INCLUDE_DIRS} 
-    ${Eigen3_INCLUDE_DIRS} 
+#    ${Eigen3_INCLUDE_DIRS} 
     ${PCL_INCLUDE_DIRS}
-)
+    src ${EIGEN3_INCLUDE_DIR}
+    )
 
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -O3 -Wall") # -Wextra -Werror
 
