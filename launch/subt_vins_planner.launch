@@ -11,10 +11,10 @@
   <node pkg="bezier_planer" type="b_traj_node" name="b_traj_node" output="screen">
  <!--     <remap from="~waypoints"      to="/waypoint_generator/waypoints"/>
 -->
-      <remap from="~waypoints"      to="/goal"/>
-      <remap from="~odometry"       to="/vins_odom"/>
-      <remap from="~map"            to="/octomap_final_output"/> 
-      <remap from="~command"        to="/position_cmd"/> 
+      <remap from="~waypoints"      to="frontier_goal_pose"/>
+      <remap from="~odometry"       to="vins_odom"/>
+      <remap from="~map"            to="octomap_final_output"/> 
+      <remap from="~command"        to="position_cmd"/> 
       <param name="optimization/poly_order"  value="8"/> 
       <param name="optimization/min_order"   value="2.5"/> 
       <param name="map/x_size"       value="$(arg map_size_x)"/>
@@ -45,20 +45,20 @@
 
   <node pkg  = "bezier_planer" type = "b_traj_server" output = "screen" name = "b_traj_server">    
       <remap from = "~trajectory"        to = "b_traj_node/trajectory"/>
-      <remap from = "~odometry"          to = "/vins_odom"/>
-      <remap from = "~position_command"  to = "/position_cmd"/>
+      <remap from = "~odometry"          to = "vins_odom"/>
+      <remap from = "~position_command"  to = "position_cmd"/>
       <param name="optimization/poly_order_min" value="3" /> 
       <param name="optimization/poly_order_max" value="12"/> 
   </node>
   
   <node pkg="waypoint_generator" name="waypoint_generator" type="waypoint_generator" output="screen">
-      <remap from="~odom" to="/vins_odom"/>        
-      <remap from="~goal" to="/goal"/>
+      <remap from="~odom" to="vins_odom"/>        
+      <remap from="~goal" to="frontier_goal_pose"/>
       <param name="waypoint_type" value="manual-lonely-waypoint"/>    
   </node>
 
 <node pkg="odom_visualization" name="odom_visualization_ukf_" type="odom_visualization" output="screen">
-      <remap from="~odom" to="/vins_odom"/>
+      <remap from="~odom" to="vins_odom"/>
       <param name="color/a" value="0.8"/>    
       <param name="color/r" value="0.0"/>        
       <param name="color/g" value="0.0"/>        
