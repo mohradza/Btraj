@@ -139,7 +139,6 @@ void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd)
 
 void rcvOdometryCallbck(const nav_msgs::Odometry odom)
 {
-    ROS_INFO_THROTTLE(5, "rcvd odom");
     //if (odom.header.frame_id != "world")
     if (odom.header.frame_id != "world")
         return ;
@@ -376,11 +375,9 @@ bool errorOdomPos()
  //   ROS_INFO("diff = %f, %f, %f", abs(_start_pt(0)-_cmd.position.x),abs(_start_pt(1)-_cmd.position.y),abs(_start_pt(2)-_cmd.position.z));
 //    errorx = abs(_start_pt(0) - _cmd.position.x);
 //    errory = abs(_start_pt(1) - _cmd.position.y);
-    //if ( (abs(_start_pt(0) - _cmd.position.x) >=errorxlim) || (abs(_start_pt(1) - _cmd.position.y) >=errorylim)) //|| (abs(_start_pt(2) - _cmd.position.z) >=errorzlim) 
-    if (false) //|| (abs(_start_pt(2) - _cmd.position.z) >=errorzlim) 
+    //if ((abs(_start_pt(2) - _cmd.position.z) >=errorzlim) 
+    if ( (abs(_start_pt(0) - _cmd.position.x) >=errorxlim) || (abs(_start_pt(1) - _cmd.position.y) >=errorylim)) 
     {
-//	ROS_INFO("Error large... x: %f, y: %f", errorx, errory);
-//        ROS_INFO("x_cmd: %f, y_cmd: %f", _cmd.position.x, _cmd.position.y);
         ROS_INFO("Odom error too large, replanning...");
 	return true;
     }
