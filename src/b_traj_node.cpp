@@ -376,7 +376,8 @@ bool errorOdomPos()
 //    errorx = abs(_start_pt(0) - _cmd.position.x);
 //    errory = abs(_start_pt(1) - _cmd.position.y);
     //if ((abs(_start_pt(2) - _cmd.position.z) >=errorzlim) 
-    if ( (abs(_start_pt(0) - _cmd.position.x) >=errorxlim) || (abs(_start_pt(1) - _cmd.position.y) >=errorylim)) 
+    //if (false || (abs(_start_pt(0) - _cmd.position.x) >=errorxlim) || (abs(_start_pt(1) - _cmd.position.y) >=errorylim)) 
+    if (false) 
     {
         ROS_INFO("Odom error too large, replanning...");
 	return true;
