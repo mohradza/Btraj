@@ -16,6 +16,7 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <rosflight_msgs/VehicleStatus.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 
@@ -66,6 +67,8 @@ float xroof, yroof, zroof;
 pcl::PointXYZ roofpt;
 
 Vector3d _start_pt, _start_vel, _start_acc, _end_pt;
+double _start_yaw;
+
 double _init_x, _init_y, _init_z;
 Vector3d _map_origin;
 double _pt_max_x, _pt_min_x, _pt_max_y, _pt_min_y, _pt_max_z, _pt_min_z;
@@ -96,16 +99,20 @@ gridPathFinder * path_finder           = new gridPathFinder();
 tf::StampedTransform transf;
 
 ros::Subscriber _poscmd_sub; 
+ros::Subscriber _vehicle_status_sub; 
 quadrotor_msgs::PositionCommand _cmd;
+rosflight_msgs::VehicleStatus _vehicle_status;
+int _replan_switch, _last_replan_state;
 
-void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd); //bnr
+void rcvPosCmdCallback(const quadrotor_msgs::PositionCommand cmd); //bnr
 
 bool errorOdomPos();
 
 //void rcvWaypointsCallback(const nav_msgs::Path & wp);
 void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp);
-void rcvPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map);
-void rcvOdometryCallbck(const nav_msgs::Odometry odom);
+void rcvPointCloudCallback(const sensor_msgs::PointCloud2 & pointcloud_map);
+void rcvOdometryCallback(const nav_msgs::Odometry odom);
+void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status);
 
 void trajPlanning();
 bool checkExecTraj();
@@ -132,12 +139,12 @@ VectorXd getStateFromBezier(const MatrixXd & polyCoeff, double t_now, int seg_no
 Vector3d getPosFromBezier(const MatrixXd & polyCoeff, double t_now, int seg_now );
 quadrotor_msgs::PolynomialTrajectory getBezierTraj();
 
-void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd)
+void rcvPosCmdCallback(const quadrotor_msgs::PositionCommand cmd)
 {	
 	_cmd    = cmd;
 }
 
-void rcvOdometryCallbck(const nav_msgs::Odometry odom)
+void rcvOdometryCallback(const nav_msgs::Odometry odom)
 {
     //if (odom.header.frame_id != "world")
     if (odom.header.frame_id != "world")
@@ -146,6 +153,13 @@ void rcvOdometryCallbck(const nav_msgs::Odometry odom)
     _odom = odom;
     _has_odom = true;
 
+    /*
+    double roll, pitch, yaw;
+    tf::Quaternion tf_quat;
+    tf::quaternionMsgToTF(_odom.pose.pose.orientation, tf_quat);
+    tf::Matrix3x3(tf_quat).getRPY(roll, pitch, yaw);
+    _start_yaw = yaw;
+*/
     _start_pt(0)  = _odom.pose.pose.position.x;
     _start_pt(1)  = _odom.pose.pose.position.y;
     _start_pt(2)  = _odom.pose.pose.position.z;
@@ -168,6 +182,16 @@ void rcvOdometryCallbck(const nav_msgs::Odometry odom)
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "quadrotor"));
 }
 
+void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status)
+{
+	_vehicle_status = status;
+
+	if (_vehicle_status.replan == 1){
+	    _replan_switch = 1;
+	}
+
+}
+
 void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp)
 {
     ROS_INFO("wp rcvd");
@@ -183,6 +207,13 @@ void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp)
     _end_pt << wp.pose.position.x,
                wp.pose.position.y,
                wp.pose.position.z;
+ /*
+    double roll, pitch, yaw;
+    tf::Quaternion tf_quat;
+    tf::quaternionMsgToTF(_odom.pose.pose.orientation, tf_quat);
+    tf::Matrix3x3(tf_quat).getRPY(roll, pitch, yaw);
+    _end_yaw = yaw;
+*/
 
  //   _end_pt << 2, 0, .75;
 
@@ -195,7 +226,7 @@ void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp)
 }
 
 Vector3d _local_origin;
-void rcvPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map)
+void rcvPointCloudCallback(const sensor_msgs::PointCloud2 & pointcloud_map)
 {
 
     pcl::PointCloud<pcl::PointXYZ> cloud;
@@ -335,9 +366,10 @@ void rcvPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map)
 //    if( checkExecTraj() == true )
 //        trajPlanning();
 
-    if( checkExecTraj() == true || errorOdomPos() == true){
+    if( checkExecTraj() == true || _replan_switch == 1){
         trajPlanning(); 
         ROS_INFO("Replanning");
+	_replan_switch = 0;
     }
 
 }
@@ -1287,11 +1319,11 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "b_traj_node");
     ros::NodeHandle nh("~");
 
-    _map_sub  = nh.subscribe( "map",       1, rcvPointCloudCallBack );
-    _odom_sub = nh.subscribe( "odometry",  1, rcvOdometryCallbck);
+    _map_sub  = nh.subscribe( "map",       1, rcvPointCloudCallback );
+    _odom_sub = nh.subscribe( "odometry",  1, rcvOdometryCallback);
     _pts_sub  = nh.subscribe( "waypoints", 1, rcvWaypointsCallback );
-    _poscmd_sub = nh.subscribe( "command", 1, rcvPosCmdCallBack);
-
+    _poscmd_sub = nh.subscribe( "command", 1, rcvPosCmdCallback);
+    _vehicle_status_sub = nh.subscribe( "/vehicle_status", 1, rcvVehicleStatusCallback);
 
     _inf_map_vis_pub   = nh.advertise<sensor_msgs::PointCloud2>("vis_map_inflate", 1);
     _local_map_vis_pub = nh.advertise<sensor_msgs::PointCloud2>("vis_map_local", 1);
@@ -1357,6 +1389,10 @@ int main(int argc, char** argv)
     _pt_max_z = + _z_size;
     _pt_min_z = 0.0;
 
+    _last_replan_state = 0;
+    _replan_switch = 0;
+
+
     _inv_resolution = 1.0 / _resolution;
     _max_x_id = (int)(_x_size * _inv_resolution);
     _max_y_id = (int)(_y_size * _inv_resolution);
@@ -1398,7 +1434,7 @@ int main(int argc, char** argv)
 
 quadrotor_msgs::PolynomialTrajectory getBezierTraj()
 {
-    quadrotor_msgs::PolynomialTrajectory traj;
+      quadrotor_msgs::PolynomialTrajectory traj;
       traj.action = quadrotor_msgs::PolynomialTrajectory::ACTION_ADD;
       traj.num_segment = _seg_num;
 

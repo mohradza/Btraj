@@ -71,6 +71,9 @@ public:
         _traj_sub =
             handle.subscribe("trajectory", 2, &TrajectoryServer::rcvTrajectoryCallabck, this);
 
+//	_vehicle_control_state_sub = 
+//	    handle.subscribe("")
+
         _cmd_pub = 
             handle.advertise<quadrotor_msgs::PositionCommand>("position_command", 50);
 
