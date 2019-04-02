@@ -187,7 +187,8 @@ void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status)
 	_vehicle_status = status;
 
 	if (_vehicle_status.replan == 1){
-	    _replan_switch = 1;
+                ROS_INFO("Replan switch");
+    		_replan_switch = 1;
 	}
 
 }
