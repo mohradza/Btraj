@@ -367,7 +367,9 @@ void rcvPointCloudCallback(const sensor_msgs::PointCloud2 & pointcloud_map)
 //    if( checkExecTraj() == true )
 //        trajPlanning();
 
-    if( checkExecTraj() == true || _replan_switch == 1){
+    //if( checkExecTraj() == true || _replan_switch == 1){
+    if( checkExecTraj() == true || errorOdomPos() == true){
+    //if( checkExecTraj() == true ){
         trajPlanning(); 
         ROS_INFO("Replanning");
 	_replan_switch = 0;
@@ -398,7 +400,7 @@ vector<pcl::PointXYZ> pointInflate( pcl::PointXYZ pt)
 
 bool errorOdomPos()
 {
-    float errorxlim = .5;
+    float errorxlim = 1.5;
     float errorylim = errorxlim;
     //float errorx;
     //float errory;
@@ -409,8 +411,8 @@ bool errorOdomPos()
 //    errorx = abs(_start_pt(0) - _cmd.position.x);
 //    errory = abs(_start_pt(1) - _cmd.position.y);
     //if ((abs(_start_pt(2) - _cmd.position.z) >=errorzlim) 
-    //if (false || (abs(_start_pt(0) - _cmd.position.x) >=errorxlim) || (abs(_start_pt(1) - _cmd.position.y) >=errorylim)) 
-    if (false) 
+    if (false || (abs(_start_pt(0) - _cmd.position.x) >=errorxlim) || (abs(_start_pt(1) - _cmd.position.y) >=errorylim)) 
+    //if (false) 
     {
         ROS_INFO("Odom error too large, replanning...");
 	return true;

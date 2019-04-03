@@ -25,14 +25,14 @@
       <param name="map/y_local_size" value="16.0"/>
       <param name="map/z_local_size" value="8.0" />
 
-      <param name="map/margin"       value="0.25" />
+      <param name="map/margin"       value="0.3" />
       <param name="planning/init_x"  value="$(arg init_x)"/>
       <param name="planning/init_y"  value="$(arg init_y)"/>
       <param name="planning/init_z"  value="$(arg init_z)"/>
       <param name="planning/inflate_iter"  value="200"  />
       <param name="planning/step_length"   value="1"    />
       <param name="planning/cube_margin"   value="0"  />
-      <param name="planning/max_vel"       value=".75"  />
+      <param name="planning/max_vel"       value=".8"  />
       <param name="planning/max_acc"       value="1.0"  />
       <param name="planning/check_horizon" value="10.0" />
       <param name="planning/stop_horizon"  value=" 3.0" />
