@@ -12,7 +12,7 @@
  <!--     <remap from="~waypoints"      to="/waypoint_generator/waypoints"/>
 -->
       <remap from="~waypoints"      to="/goal"/>
-      <remap from="~odometry"       to="/vins_odom"/>
+      <remap from="~odometry"       to="/odom"/>
       <remap from="~map"            to="/octomap_final_output"/> 
       <remap from="~command"        to="/position_cmd"/> 
       <param name="optimization/poly_order"  value="8"/> 
