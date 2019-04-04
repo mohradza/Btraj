@@ -16,6 +16,7 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <rosflight_msgs/VehicleStatus.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 
@@ -52,6 +53,8 @@ double _MAX_Vel, _MAX_Acc;
 bool   _is_use_fm, _is_proj_cube, _is_limit_vel, _is_limit_acc;
 int    _step_length, _max_inflate_iter, _traj_order;
 double _minimize_order;
+int _replan_switch;
+int _last_replan_state;
 
 // useful global variables
 nav_msgs::Odometry _odom;
@@ -96,8 +99,9 @@ gridPathFinder * path_finder           = new gridPathFinder();
 tf::StampedTransform transf;
 
 ros::Subscriber _poscmd_sub; 
+ros::Subscriber _vehicle_status_sub; 
 quadrotor_msgs::PositionCommand _cmd;
-
+rosflight_msgs::VehicleStatus _vehicle_status;
 void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd); //bnr
 
 bool errorOdomPos();
@@ -106,6 +110,7 @@ bool errorOdomPos();
 void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp);
 void rcvPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map);
 void rcvOdometryCallbck(const nav_msgs::Odometry odom);
+void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status);
 
 void trajPlanning();
 bool checkExecTraj();
@@ -366,8 +371,8 @@ void rcvPointCloudCallback(const sensor_msgs::PointCloud2 & pointcloud_map)
 //    if( checkExecTraj() == true )
 //        trajPlanning();
 
-    //if( checkExecTraj() == true || _replan_switch == 1){
-    if( checkExecTraj() == true || errorOdomPos() == true){
+    if( checkExecTraj() == true || _replan_switch == 1){
+    //if( checkExecTraj() == true || errorOdomPos() == true){
     //if( checkExecTraj() == true ){
         trajPlanning(); 
         ROS_INFO("Replanning");
@@ -399,7 +404,7 @@ vector<pcl::PointXYZ> pointInflate( pcl::PointXYZ pt)
 
 bool errorOdomPos()
 {
-    float errorxlim = .75;
+    float errorxlim = 1.0;
     float errorylim = errorxlim;
     //float errorx;
     //float errory;
@@ -1394,7 +1399,6 @@ int main(int argc, char** argv)
     _last_replan_state = 0;
     _replan_switch = 0;
 
-
     _inv_resolution = 1.0 / _resolution;
     _max_x_id = (int)(_x_size * _inv_resolution);
     _max_y_id = (int)(_y_size * _inv_resolution);
@@ -1649,6 +1653,42 @@ void visBezierTrajectory(MatrixXd polyCoeff, VectorXd time)
     traj_vis.pose.orientation.x = 0.0;
     traj_vis.pose.orientation.y = 0.0;
     traj_vis.pose.orientation.z = 0.0;
+    traj_vis.pose.orientation.w = 1.0;
+    traj_vis.color.r = 1.0;
+    traj_vis.color.g = 0.0;
+    traj_vis.color.b = 0.0;
+    traj_vis.color.a = 0.6;
+
+    double traj_len = 0.0;
+    int count = 0;
+    Vector3d cur, pre;
+    cur.setZero();
+    pre.setZero();
+    
+    traj_vis.points.clear();
+
+    Vector3d state;
+    geometry_msgs::Point pt;
+
+    int segment_num  = polyCoeff.rows();
+    for(int i = 0; i < segment_num; i++ ){
+        for (double t = 0.0; t < 1.0; t += 0.05 / time(i), count += 1){
+            state = getPosFromBezier( polyCoeff, t, i );
+            cur(0) = pt.x = time(i) * state(0);
+            cur(1) = pt.y = time(i) * state(1);
+            cur(2) = pt.z = time(i) * state(2);
+            traj_vis.points.push_back(pt);
+
+            if (count) traj_len += (pre - cur).norm();
+            pre = cur;
+        }
+    }
+
+    ROS_INFO("[GENERATOR] The length of the trajectory; %.3lfm.", traj_len);
+    _traj_vis_pub.publish(traj_vis);
+}
+
+visualization_msgs::MarkerArray grid_vis; 
 void visGridPath( vector<Vector3d> grid_path )
 {
     for(auto & mk: grid_vis.markers)

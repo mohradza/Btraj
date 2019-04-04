@@ -45,20 +45,20 @@
 
   <node pkg  = "bezier_planer" type = "b_traj_server" output = "screen" name = "b_traj_server">    
       <remap from = "~trajectory"        to = "b_traj_node/trajectory"/>
-      <remap from = "~odometry"          to = "/vins_odom"/>
+      <remap from = "~odometry"          to = "/odom"/>
       <remap from = "~position_command"  to = "/position_cmd"/>
       <param name="optimization/poly_order_min" value="3" /> 
       <param name="optimization/poly_order_max" value="12"/> 
   </node>
   
   <node pkg="waypoint_generator" name="waypoint_generator" type="waypoint_generator" output="screen">
-      <remap from="~odom" to="/vins_odom"/>        
+      <remap from="~odom" to="/odom"/>        
       <remap from="~goal" to="/goal"/>
       <param name="waypoint_type" value="manual-lonely-waypoint"/>    
   </node>
 
 <node pkg="odom_visualization" name="odom_visualization_ukf_" type="odom_visualization" output="screen">
-      <remap from="~odom" to="/vins_odom"/>
+      <remap from="~odom" to="/odom"/>
       <param name="color/a" value="0.8"/>    
       <param name="color/r" value="0.0"/>        
       <param name="color/g" value="0.0"/>        
