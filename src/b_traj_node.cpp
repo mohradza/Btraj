@@ -16,7 +16,6 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <rosflight_msgs/VehicleStatus.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 
@@ -67,8 +66,6 @@ float xroof, yroof, zroof;
 pcl::PointXYZ roofpt;
 
 Vector3d _start_pt, _start_vel, _start_acc, _end_pt;
-double _start_yaw;
-
 double _init_x, _init_y, _init_z;
 Vector3d _map_origin;
 double _pt_max_x, _pt_min_x, _pt_max_y, _pt_min_y, _pt_max_z, _pt_min_z;
@@ -99,22 +96,25 @@ gridPathFinder * path_finder           = new gridPathFinder();
 tf::StampedTransform transf;
 
 ros::Subscriber _poscmd_sub; 
-ros::Subscriber _vehicle_status_sub; 
 quadrotor_msgs::PositionCommand _cmd;
-rosflight_msgs::VehicleStatus _vehicle_status;
-int _replan_switch, _last_replan_state;
 
-void rcvPosCmdCallback(const quadrotor_msgs::PositionCommand cmd); //bnr
+void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd); //bnr
 
 bool errorOdomPos();
 
 //void rcvWaypointsCallback(const nav_msgs::Path & wp);
 void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp);
-void rcvPointCloudCallback(const sensor_msgs::PointCloud2 & pointcloud_map);
-void rcvOdometryCallback(const nav_msgs::Odometry odom);
-void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status);
+void rcvPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map);
+void rcvOdometryCallbck(const nav_msgs::Odometry odom);
 
 void trajPlanning();
+bool checkExecTraj();
+bool checkCoordObs(Vector3d checkPt);
+vector<pcl::PointXYZ> pointInflate( pcl::PointXYZ pt);
+
+void visPath(vector<Vector3d> path);
+void visCorridor(vector<Cube> corridor);
+void visGridPath( vector<Vector3d> grid_path);
 bool checkExecTraj();
 bool checkCoordObs(Vector3d checkPt);
 vector<pcl::PointXYZ> pointInflate( pcl::PointXYZ pt);
@@ -186,13 +186,8 @@ void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status)
 {
 	_vehicle_status = status;
 	if (_vehicle_status.replan == 1){
-<<<<<<< HEAD
-                ROS_INFO("Replan switch");
-    		_replan_switch = 1;
-=======
 	    _replan_switch = 1;
     	    ROS_INFO("replan switch");	    
->>>>>>> 1a1b496f138bbe8829d331d0ec8be2257aa9858b
 	}
 
 }
@@ -404,7 +399,7 @@ vector<pcl::PointXYZ> pointInflate( pcl::PointXYZ pt)
 
 bool errorOdomPos()
 {
-    float errorxlim = 1.5;
+    float errorxlim = .75;
     float errorylim = errorxlim;
     //float errorx;
     //float errory;
@@ -1654,42 +1649,6 @@ void visBezierTrajectory(MatrixXd polyCoeff, VectorXd time)
     traj_vis.pose.orientation.x = 0.0;
     traj_vis.pose.orientation.y = 0.0;
     traj_vis.pose.orientation.z = 0.0;
-    traj_vis.pose.orientation.w = 1.0;
-    traj_vis.color.r = 1.0;
-    traj_vis.color.g = 0.0;
-    traj_vis.color.b = 0.0;
-    traj_vis.color.a = 0.6;
-
-    double traj_len = 0.0;
-    int count = 0;
-    Vector3d cur, pre;
-    cur.setZero();
-    pre.setZero();
-
-    traj_vis.points.clear();
-
-    Vector3d state;
-    geometry_msgs::Point pt;
-
-    int segment_num  = polyCoeff.rows();
-    for(int i = 0; i < segment_num; i++ ){
-        for (double t = 0.0; t < 1.0; t += 0.05 / time(i), count += 1){
-            state = getPosFromBezier( polyCoeff, t, i );
-            cur(0) = pt.x = time(i) * state(0);
-            cur(1) = pt.y = time(i) * state(1);
-            cur(2) = pt.z = time(i) * state(2);
-            traj_vis.points.push_back(pt);
-
-            if (count) traj_len += (pre - cur).norm();
-            pre = cur;
-        }
-    }
-
-    ROS_INFO("[GENERATOR] The length of the trajectory; %.3lfm.", traj_len);
-    _traj_vis_pub.publish(traj_vis);
-}
-
-visualization_msgs::MarkerArray grid_vis;
 void visGridPath( vector<Vector3d> grid_path )
 {
     for(auto & mk: grid_vis.markers)
