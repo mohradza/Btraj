@@ -371,7 +371,7 @@ void rcvPointCloudCallback(const sensor_msgs::PointCloud2 & pointcloud_map)
 //    if( checkExecTraj() == true )
 //        trajPlanning();
 
-    if( checkExecTraj() == true || _replan_switch == 1){
+    if( checkExecTraj() == true || _replan_switch == 1 || errorOdomPos() == true){
     //if( checkExecTraj() == true || errorOdomPos() == true){
     //if( checkExecTraj() == true ){
         trajPlanning(); 
