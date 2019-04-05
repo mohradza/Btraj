@@ -16,7 +16,7 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <rosflight_msgs/VehicleStatus.h>
+#include <rosflight_msgs/ControlStatus.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 
@@ -99,9 +99,9 @@ gridPathFinder * path_finder           = new gridPathFinder();
 tf::StampedTransform transf;
 
 ros::Subscriber _poscmd_sub; 
-ros::Subscriber _vehicle_status_sub; 
+ros::Subscriber _control_status_sub; 
 quadrotor_msgs::PositionCommand _cmd;
-rosflight_msgs::VehicleStatus _vehicle_status;
+rosflight_msgs::ControlStatus _control_status;
 void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd); //bnr
 
 bool errorOdomPos();
@@ -110,7 +110,7 @@ bool errorOdomPos();
 void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp);
 void rcvPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map);
 void rcvOdometryCallbck(const nav_msgs::Odometry odom);
-void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status);
+void rcvControlStatusCallback(const rosflight_msgs::ControlStatus status);
 
 void trajPlanning();
 bool checkExecTraj();
@@ -187,10 +187,10 @@ void rcvOdometryCallback(const nav_msgs::Odometry odom)
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "quadrotor"));
 }
 
-void rcvVehicleStatusCallback(const rosflight_msgs::VehicleStatus status)
+void rcvControlStatusCallback(const rosflight_msgs::ControlStatus status)
 {
-	_vehicle_status = status;
-	if (_vehicle_status.replan == 1){
+	_control_status = status;
+	if (_control_status.replan == 1){
 	    _replan_switch = 1;
     	    ROS_INFO("replan switch");	    
 	}
@@ -1330,7 +1330,7 @@ int main(int argc, char** argv)
     _odom_sub = nh.subscribe( "odometry",  1, rcvOdometryCallback);
     _pts_sub  = nh.subscribe( "waypoints", 1, rcvWaypointsCallback );
     _poscmd_sub = nh.subscribe( "command", 1, rcvPosCmdCallback);
-    _vehicle_status_sub = nh.subscribe( "/vehicle_status", 1, rcvVehicleStatusCallback);
+    _control_status_sub = nh.subscribe( "/control_status", 1, rcvControlStatusCallback);
 
     _inf_map_vis_pub   = nh.advertise<sensor_msgs::PointCloud2>("vis_map_inflate", 1);
     _local_map_vis_pub = nh.advertise<sensor_msgs::PointCloud2>("vis_map_local", 1);
