@@ -211,7 +211,8 @@ void rcvWaypointsCallback(const geometry_msgs::PoseStamped & wp)
 */
     _end_pt << wp.pose.position.x,
                wp.pose.position.y,
-               wp.pose.position.z;
+               //wp.pose.position.z;
+               .75;
  /*
     double roll, pitch, yaw;
     tf::Quaternion tf_quat;
